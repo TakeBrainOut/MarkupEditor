@@ -142,6 +142,9 @@ public protocol MarkupDelegate {
     /// The toolbar really should be re-enabled.
     func markupDeactivateSearch(_ view: MarkupWKWebView)
     
+    /// Делетаг тапа на кнопку с Voice в Toolbar
+    func markupDidTapVoiceInToolbar()
+
 }
 
 extension MarkupDelegate {
@@ -150,6 +153,7 @@ extension MarkupDelegate {
     public func markup(_ view: MarkupWKWebView, heightDidChange height: Int) {}
     public func markupTookFocus(_ view: MarkupWKWebView) {}
     public func markupLostFocus(_ view: MarkupWKWebView) {}
+    public func markupDidTapVoiceInToolbar() {}
     
     /// The MarkupWKWebView has loaded the JavaScript and CSS, but the editor html has
     /// not been loaded.

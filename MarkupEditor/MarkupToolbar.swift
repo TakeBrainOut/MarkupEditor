@@ -32,27 +32,29 @@ public struct MarkupToolbar: View {
             HStack {
                 ScrollView(.horizontal) {
                     HStack {
+                        
+                        ToolbarImageButton(
+                            systemName: "mic.fill",
+                            action: { markupDelegate?.markupDidTapVoiceInToolbar() },
+                            notActiveBackground: Color(red: 0.4, green: 0.8, blue: 0.2)
+                        )
+                        
                         if contents.leftToolbar {
                             MarkupEditor.leftToolbar!
                         }
                         if contents.correction {
-                            if contents.leftToolbar { Divider() }
                             CorrectionToolbar()
                         }
-                        if contents.insert {
-                            if contents.leftToolbar || contents.correction { Divider() }
-                            InsertToolbar()
-                        }
-                        if contents.style {
-                            if contents.leftToolbar || contents.correction  || contents.insert { Divider() }
-                            StyleToolbar()
-                        }
                         if contents.format {
-                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style { Divider() }
                             FormatToolbar()
                         }
+                        if contents.style {
+                            StyleToolbar()
+                        }
+                        if contents.insert {
+                            InsertToolbar()
+                        }
                         if contents.rightToolbar {
-                            if contents.leftToolbar || contents.correction  || contents.insert || contents.style || contents.format { Divider() }
                             MarkupEditor.rightToolbar!
                         }
                         Spacer()                // Push everything to the left
@@ -75,10 +77,17 @@ public struct MarkupToolbar: View {
                 }
             }
         }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.85))
+                .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
+        )
         // Because the icons in toolbars are sized based on font, we need to limit their dynamicTypeSize
         // or they become illegible at very large sizes.
         .dynamicTypeSize(.small ... .xLarge)
         .frame(height: MarkupEditor.toolbarStyle.height())
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 4)
         .zIndex(999)
     }
     

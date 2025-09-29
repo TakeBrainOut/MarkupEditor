@@ -33,11 +33,13 @@ public class MarkupMenu {
         var children = [UIMenu]()
         if contents.insert { children.append(insertMenu()) }
         if contents.style {
-            if contents.styleContents.paragraph { children.append(styleMenu()) }
             if !contents.styleContents.listType.isEmpty { children.append(listMenu()) }
             if contents.styleContents.dent { children.append(dentMenu()) }
         }
-        if contents.format { children.append(formatMenu()) }
+        if contents.format {
+            if contents.formatContents.paragraph { children.append(styleMenu()) }
+            children.append(formatMenu())
+        }
         if children.isEmpty { return }  // Show no markupMenu
         let markupMenu = UIMenu(title: "Format", children: children)
         builder.insertSibling(markupMenu, afterMenu: .edit)

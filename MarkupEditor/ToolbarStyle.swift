@@ -25,29 +25,31 @@ public class ToolbarStyle: @unchecked Sendable, ObservableObject {
     }
     
     public func height() -> CGFloat {
-        switch style {
-        case .compact:
-            if UIDevice.current.userInterfaceIdiom == .mac {
-                return 30
-            } else {
-                return 40
-            }
-        case .labeled:
-            return 48
-        }
+        return 52
+//        switch style {
+//        case .compact:
+//            if UIDevice.current.userInterfaceIdiom == .mac {
+//                return 30
+//            } else {
+//                return 40
+//            }
+//        case .labeled:
+//            return 48
+//        }
     }
     
     public func buttonHeight() -> CGFloat {
-        switch style {
-        case .compact:
-            if UIDevice.current.userInterfaceIdiom == .mac {
-                return 24
-            } else {
-                return 34
-            }
-        case .labeled:
-            return 30
-        }
+        return 40
+//        switch style {
+//        case .compact:
+//            if UIDevice.current.userInterfaceIdiom == .mac {
+//                return 24
+//            } else {
+//                return 34
+//            }
+//        case .labeled:
+//            return 30
+//        }
     }
     
     public static func symbolScale(for style: Style) -> UIImage.SymbolScale {

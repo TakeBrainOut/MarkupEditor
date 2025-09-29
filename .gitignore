@@ -4,3 +4,19 @@
 xcuserdata/
 **/node_modules/
 **/dist/
+Derived/
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/xcshareddata/
+*.xcworkspace/
+.DS_Store
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Tuist
+Tuist/.build/

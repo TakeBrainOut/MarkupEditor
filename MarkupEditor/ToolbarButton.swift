@@ -19,29 +19,43 @@ public struct ToolbarImageButton<Content: View>: View {
     @Binding private var active: Bool
     private let activeColor: Color
     private let onHover: ((Bool)->Void)?
+    private let notActiveBackground: Color
     
     public var body: some View {
         Button(action: action, label: {
             label()
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(active ? Color(red: 0.2, green: 0.8, blue: 0.2) : Color.white)
                 .frame(width: MarkupEditor.toolbarStyle.buttonHeight(), height: MarkupEditor.toolbarStyle.buttonHeight())
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(active ? Color(red: 0.15, green: 0.15, blue: 0.15) : notActiveBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(active ? Color(red: 0.2, green: 0.8, blue: 0.2) : Color.clear, lineWidth: 1)
+                        )
+                )
         })
         .onHover { over in onHover?(over) }
-        // For MacOS buttons (Optimized Interface for Mac), specifying .contentShape
-        // fixes some flaky problems in surrounding SwiftUI views that are presented
-        // below this one, altho AFAICT not in ones adjacent horizontally.
-        // Ref: https://stackoverflow.com/a/67377002/8968411
-        .contentShape(RoundedRectangle(cornerRadius: 3))
-        .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
+        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .buttonStyle(PlainButtonStyle())
     }
 
     /// Initialize a button using content. See the extension where Content == EmptyView for the systemName style initialization.
-    public init(action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, onHover: ((Bool)->Void)? = nil, @ViewBuilder content: ()->Content) {
-        self.systemName = nil
-        self.image = content()
-        self.action = action
-        _active = active
-        self.activeColor = activeColor
-        self.onHover = onHover
+    public init(
+        action: @escaping ()->Void,
+        active: Binding<Bool> = .constant(false),
+        activeColor: Color = .accentColor,
+        notActiveBackground: Color = Color(red: 0.1, green: 0.1, blue: 0.1),
+        onHover: ((Bool)->Void)? = nil,
+        @ViewBuilder content: ()->Content) {
+            self.notActiveBackground = notActiveBackground
+            self.systemName = nil
+            self.image = content()
+            self.action = action
+            _active = active
+            self.activeColor = activeColor
+            self.onHover = onHover
     }
     
     private func label() -> AnyView {
@@ -49,7 +63,11 @@ public struct ToolbarImageButton<Content: View>: View {
         if systemName == nil {
             return AnyView(image)
         } else {
-            return AnyView(Image(systemName: systemName!).imageScale(.large))
+            return AnyView(
+                Image(systemName: systemName!)
+                .imageScale(.large)
+                .fontWeight(.bold)
+            )
         }
     }
 
@@ -58,12 +76,21 @@ public struct ToolbarImageButton<Content: View>: View {
 extension ToolbarImageButton where Content == EmptyView {
     
     /// Initialize a button using a systemImage which will override content, even if passed-in. Intended for use without a content block.
-    public init(systemName: String, action: @escaping ()->Void, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor, onHover: ((Bool)->Void)? = nil, @ViewBuilder content: ()->Content = { EmptyView() }) {
+    public init(
+        systemName: String,
+        action: @escaping ()->Void,
+        active: Binding<Bool> = .constant(false),
+        activeColor: Color = .accentColor,
+        notActiveBackground: Color = Color(red: 0.1, green: 0.1, blue: 0.1),
+        onHover: ((Bool)->Void)? = nil,
+        @ViewBuilder content: ()->Content = { EmptyView() }
+    ) {
         self.systemName = systemName
         self.image = content()
         self.action = action
         _active = active
         self.activeColor = activeColor
+        self.notActiveBackground = notActiveBackground
         self.onHover = onHover
     }
     
@@ -79,19 +106,21 @@ public struct ToolbarTextButton: View {
     public var body: some View {
         Button(action: action, label: {
             Text(title)
-                .frame(width: width, height: MarkupEditor.toolbarStyle.buttonHeight())
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(active ? Color(red: 0.2, green: 0.8, blue: 0.2) : Color.white)
+                .frame(width: width ?? 60, height: MarkupEditor.toolbarStyle.buttonHeight())
                 .padding(.horizontal, 8)
                 .background(
-                    RoundedRectangle(
-                        cornerRadius: 3,
-                        style: .continuous
-                    )
-                    .stroke(Color.accentColor)
-                    .background(Color(UIColor.systemGray6))
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(active ? Color(red: 0.15, green: 0.15, blue: 0.15) : Color(red: 0.1, green: 0.1, blue: 0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(active ? Color(red: 0.2, green: 0.8, blue: 0.2) : Color.clear, lineWidth: 1)
+                        )
                 )
         })
-        .contentShape(RoundedRectangle(cornerRadius: 3))
-        .buttonStyle(ToolbarButtonStyle(active: $active, activeColor: activeColor))
+        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .buttonStyle(PlainButtonStyle())
     }
     
     public init(title: String, action: @escaping ()->Void, width: CGFloat? = nil, active: Binding<Bool> = .constant(false), activeColor: Color = .accentColor) {
@@ -115,21 +144,8 @@ public struct ToolbarButtonStyle: ButtonStyle {
     
     public func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
-            .cornerRadius(3)
-            .foregroundColor(active ? Color(UIColor.systemBackground) : activeColor)
-            .overlay(
-                RoundedRectangle(
-                    cornerRadius: 3,
-                    style: .continuous
-                )
-                .stroke(Color.accentColor)
-            )
-            .background(
-                RoundedRectangle(
-                    cornerRadius: 3,
-                    style: .continuous
-                )
-                .fill(active ? activeColor: Color.clear)
-            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }

@@ -30,59 +30,6 @@ public struct StyleToolbar: View {
             // looks different than "Scale Interface from iPad". They used to look the same,
             // but as of iOS 16, the "Optimize Interface for Mac" always has the drop-down
             // arrow next to the title.
-            if contents.paragraph {
-                if #available(iOS 16, macCatalyst 16, *) {
-                    Menu {
-                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
-                                Text(styleContext.name)
-                                    .font(.system(size: styleContext.fontSize))
-                            }
-                        }
-                    } label: {
-                        // Note foreground color is black on Mac Catalyst, which
-                        // doesn't seem to be settable at all with "Optimized for Mac"
-                        Text(selectionState.style.name)
-                            .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
-                    }
-                    .buttonStyle(.borderless)
-                    .menuStyle(.button)         // Not available until iOS 16
-                    .frame(width: 88, height: toolbarStyle.buttonHeight())
-                    .overlay(
-                        RoundedRectangle(
-                            cornerRadius: 3,
-                            style: .continuous
-                        )
-                        .stroke(Color.accentColor)
-                    )
-                    .disabled(!selectionState.canStyle)
-                } else {
-                    Menu {
-                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
-                                Text(styleContext.name)
-                                    .font(.system(size: styleContext.fontSize))
-                            }
-                        }
-                    } label: {
-                        Text(selectionState.style.name)
-                            .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
-                    }
-                    .menuStyle(.borderlessButton)   // Deprecated as of iOS14
-                    .frame(width: 88, height: toolbarStyle.buttonHeight())
-                    .overlay(
-                        RoundedRectangle(
-                            cornerRadius: 3,
-                            style: .continuous
-                        )
-                        .stroke(Color.accentColor)
-                    )
-                    .disabled(!selectionState.canStyle)
-                }
-                if !contents.listType.isEmpty || contents.dent {
-                    Divider()
-                }
-            }
 
             ForEach(contents.listType, id: \.self) { type in
                 switch type {

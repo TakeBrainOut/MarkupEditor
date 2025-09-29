@@ -103,18 +103,15 @@ public struct StyleContents {
         case bullet, number
     }
 
-    public var paragraph: Bool
     public var listType: [ListType]
     public var dent: Bool
 
     public init(paragraph: Bool = true, listType: [ListType], dent: Bool = true) {
-        self.paragraph = paragraph
         self.listType = listType
         self.dent = dent
     }
 
     public init(paragraph: Bool = true, list: Bool = true, dent: Bool = true) {
-        self.paragraph = paragraph
         self.listType = list ? [.bullet, .number] : []
         self.dent = dent
     }
@@ -122,11 +119,13 @@ public struct StyleContents {
 
 /// Identify whether the code, strikethrough, and sub/superscript items will show up
 public struct FormatContents {
+    public var paragraph: Bool
     public var code: Bool
     public var strike: Bool
     public var subSuper: Bool
     
-    public init(code: Bool = true, strike: Bool = true, subSuper: Bool = false) {
+    public init(paragraph: Bool = true, code: Bool = true, strike: Bool = true, subSuper: Bool = false) {
+        self.paragraph = paragraph
         self.code = code
         self.strike = strike
         self.subSuper = subSuper

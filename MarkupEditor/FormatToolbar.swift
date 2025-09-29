@@ -9,6 +9,7 @@
 import SwiftUI
 
 public struct FormatToolbar: View {
+    @EnvironmentObject private var toolbarStyle: ToolbarStyle
     @ObservedObject private var observedWebView: ObservedWebView = MarkupEditor.observedWebView
     @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
     private let contents: FormatContents = MarkupEditor.toolbarContents.formatContents
@@ -18,6 +19,64 @@ public struct FormatToolbar: View {
 
     public var body: some View {
         LabeledToolbar(label: hoverLabel) {
+            
+            // H1, H2 and etc
+            if contents.paragraph {
+                if #available(iOS 16, macCatalyst 16, *) {
+                    Menu {
+                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
+                                Text(styleContext.name)
+                                    .font(.system(size: styleContext.fontSize))
+                            }
+                        }
+                    } label: {
+                        // Note foreground color is black on Mac Catalyst, which
+                        // doesn't seem to be settable at all with "Optimized for Mac"
+                        Text(selectionState.style.name)
+                            .foregroundColor(.white)
+                            .fontWeight(.bold)
+                            .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
+                    }
+                    .buttonStyle(.borderless)
+                    .menuStyle(.button)         // Not available until iOS 16
+//                    .frame(width: 88, height: toolbarStyle.buttonHeight())
+                    .frame(width: 88, height: 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke( Color.clear, lineWidth: 1)
+                            )
+                    )
+                    .disabled(!selectionState.canStyle)
+                } else {
+                    Menu {
+                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
+                                Text(styleContext.name)
+                                    .font(.system(size: styleContext.fontSize))
+                            }
+                        }
+                    } label: {
+                        Text(selectionState.style.name)
+                            .frame(width: 64, height: toolbarStyle.buttonHeight(), alignment: .center)
+                    }
+                    .menuStyle(.borderlessButton)   // Deprecated as of iOS14
+                    .frame(width: 88, height: toolbarStyle.buttonHeight())
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke( Color.clear, lineWidth: 1)
+                            )
+                    )
+                    .disabled(!selectionState.canStyle)
+                }
+            }
+
             ToolbarImageButton(
                 systemName: "bold",
                 action: { observedWebView.selectedWebView?.bold() },
