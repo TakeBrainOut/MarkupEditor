@@ -55,7 +55,7 @@ public struct InsertToolbar: View {
                     // We pass $showTablePopover so that the view can dismiss itself
                     if selectionState.isInTable {
                         TableToolbar(showing: $showTablePopover)
-                            .padding()
+                            .padding(.bottom, 8)
                             .environmentObject(MarkupEditor.toolbarStyle)
                             .onDisappear {
                                 MarkupEditor.showInsertPopover.type = nil

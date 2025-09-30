@@ -158,7 +158,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
-        tintColor = tintColor.resolvedColor(with: .current)
+        tintColor = UIColor(MarkupConfiguration.standard.accentColor)
         // Set up the accessoryView to be a MarkupToolbarUIView only if toolbarLocation == .keyboard
         if MarkupEditor.toolbarLocation == .keyboard {
             inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)

@@ -69,9 +69,13 @@ struct TableSizer: View {
             }
         VStack(spacing: 0) {
             if rows > 0 && cols > 0 {
-                Text("\(rows)x\(cols) table").foregroundColor(Color.black)
+                Text("\(rows)x\(cols) table")
+                    .foregroundColor(Color.primary)
+                    .fontWeight(.bold)
             } else {
-                Text("Size the table").foregroundColor(Color.black)
+                Text("Size the table")
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.primary)
             }
             ZStack(alignment: .topLeading) {
                 Rectangle()
@@ -83,7 +87,7 @@ struct TableSizer: View {
                             ForEach(0..<maxCols, id: \.self) { col in
                                 Rectangle()
                                     .frame(width: cellSize, height: cellSize)
-                                    .border(Color.accentColor)
+                                    .border(MarkupConfiguration.standard.accentColor)
                                     .background(Color.clear)
                                     .foregroundColor(Color.clear)
                                     .contentShape(Rectangle())

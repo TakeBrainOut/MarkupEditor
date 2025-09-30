@@ -134,7 +134,7 @@ public struct TableToolbar: View {
                     Spacer()
                 }
             }
-            .frame(height: toolbarStyle.height())
+            .frame(height: 64)
             .padding([.leading], 8)
             .disabled(observedWebView.selectedWebView == nil || !selectionState.isValid)
         }
