@@ -29,6 +29,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
     private var id: String?
     private var html: Binding<String>?
     private var selectAfterLoad: Bool = true
+    private let isEditable: Bool
     /// The placeholder text that should be shown when there is no user input.
     public var placeholder: String?
     
@@ -38,7 +39,7 @@ public struct MarkupEditorView: View, MarkupDelegate {
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
                 Divider()
             }
-            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id)
+            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, isEditable: isEditable)
             if MarkupEditor.toolbarLocation == .bottom {
                 Divider()
                 MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
@@ -56,7 +57,10 @@ public struct MarkupEditorView: View, MarkupDelegate {
         placeholder: String? = nil,
         selectAfterLoad: Bool = true,
         resourcesUrl: URL? = nil,
-        id: String? = nil) {
+        id: String? = nil,
+        isEditable: Bool = true
+    ) {
+            self.isEditable = isEditable
             self.markupDelegate = markupDelegate ?? self
             self.wkNavigationDelegate = wkNavigationDelegate
             self.wkUIDelegate = wkUIDelegate

@@ -43,6 +43,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var clientHeightPad: Int = 8                 // Value to adjust html clientHeight
     public private(set) var isReady: Bool = false       // Ready for editing
     public var hasFocus: Bool = false
+    private var editable: Bool = true
     /// The HTML that is currently loaded, if it is loaded. If it has not been loaded yet, it is the
     /// HTML that will be loaded once it finishes initializing.
     private var html: String?
@@ -118,12 +119,22 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         initForEditing()
     }
     
-    public init(html: String? = nil, placeholder: String? = nil, selectAfterLoad: Bool = true, resourcesUrl: URL? = nil, id: String? = nil, markupDelegate: MarkupDelegate? = nil, configuration: MarkupWKWebViewConfiguration? = nil) {
+    public init(
+        html: String? = nil,
+        placeholder: String? = nil,
+        selectAfterLoad: Bool = true,
+        editable: Bool = true,
+        resourcesUrl: URL? = nil,
+        id: String? = nil,
+        markupDelegate: MarkupDelegate? = nil,
+        configuration: MarkupWKWebViewConfiguration? = nil
+    ) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
         self.placeholder = placeholder
         self.selectAfterLoad = selectAfterLoad
         self.resourcesUrl = resourcesUrl
+        self.editable = editable
         if id != nil {
             self.id = id!
         }
@@ -155,7 +166,13 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         //addInteraction(dropInteraction)
         // Load markup.html to kick things off
         let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
-        loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+        if let htmlContent = loadHtmlContent(from: tempRootHtml) {
+            let result = htmlContent.replacingOccurrences(of: "###editable###", with: editable ? "true" : "false")
+            loadHTMLString(result, baseURL: tempRootHtml.deletingLastPathComponent())
+        } else {
+            // Fallback to original method if HTML content loading fails
+            loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+        }
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
         tintColor = UIColor(MarkupConfiguration.standard.accentColor)
@@ -164,6 +181,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
         }
         observeFirstResponder()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {[weak self] in
+            self?.evaluateJavaScript("MU.setEditable(false)") { result, error in
+                print(error)
+            }
+        }
     }
     
     /// Monitor the setting for MarkupEditor.observedFirstResponder, and set this MarkupWKWebView to be the first responder
@@ -274,6 +297,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     func url(forResource name: String, withExtension ext: String?) -> URL? {
         let url = bundle().url(forResource: name, withExtension: ext)
         return Bundle.main.url(forResource: name, withExtension: ext) ?? url
+    }
+    
+    /// Load the content of an HTML file into a String
+    private func loadHtmlContent(from url: URL) -> String? {
+        do {
+            return try String(contentsOf: url, encoding: .utf8)
+        } catch {
+            print("Failed to load HTML content from \(url): \(error)")
+            return nil
+        }
     }
     
     /// Initialize the directory at cacheUrl with a clean copy of the root resource files.

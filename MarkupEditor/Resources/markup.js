@@ -23448,6 +23448,7 @@
           doc: DOMParser.fromSchema(schema).parse(this.element),
           plugins: markupSetup(config, schema)
         }),
+        editable: () => this.config.editable,
         nodeViews: {
           link(node, view, getPos) { return new LinkView(node, view, getPos)},
           image(node, view, getPos) { return new ImageView(node, view, getPos) },
