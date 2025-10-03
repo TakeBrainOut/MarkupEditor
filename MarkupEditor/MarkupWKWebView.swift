@@ -166,9 +166,16 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         //addInteraction(dropInteraction)
         // Load markup.html to kick things off
         let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
+        
+        // Load HTML content, replace ###editable### placeholder, and save back to file
         if let htmlContent = loadHtmlContent(from: tempRootHtml) {
             let result = htmlContent.replacingOccurrences(of: "###editable###", with: editable ? "true" : "false")
-            loadHTMLString(result, baseURL: tempRootHtml.deletingLastPathComponent())
+            if saveHtmlContent(result, to: tempRootHtml) {
+                loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+            } else {
+                // Fallback to original method if HTML content saving fails
+                loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
+            }
         } else {
             // Fallback to original method if HTML content loading fails
             loadFileURL(tempRootHtml, allowingReadAccessTo: tempRootHtml.deletingLastPathComponent())
@@ -298,17 +305,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         let url = bundle().url(forResource: name, withExtension: ext)
         return Bundle.main.url(forResource: name, withExtension: ext) ?? url
     }
-    
-    /// Load the content of an HTML file into a String
-    private func loadHtmlContent(from url: URL) -> String? {
-        do {
-            return try String(contentsOf: url, encoding: .utf8)
-        } catch {
-            print("Failed to load HTML content from \(url): \(error)")
-            return nil
-        }
-    }
-    
+
+
     /// Initialize the directory at cacheUrl with a clean copy of the root resource files.
     ///
     /// Any failure to find or copy the root resource files results in an assertion failure, since no editing is possible.
@@ -406,6 +404,27 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     private func cacheUrl() -> URL {
         let cacheUrls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
         return cacheUrls[0].appendingPathComponent(id)
+    }
+    
+    /// Load HTML content from file
+    private func loadHtmlContent(from url: URL) -> String? {
+        do {
+            return try String(contentsOf: url, encoding: .utf8)
+        } catch {
+            print("Error loading HTML content: \(error)")
+            return nil
+        }
+    }
+    
+    /// Save HTML content to file
+    private func saveHtmlContent(_ content: String, to url: URL) -> Bool {
+        do {
+            try content.write(to: url, atomically: true, encoding: .utf8)
+            return true
+        } catch {
+            print("Error saving HTML content: \(error)")
+            return false
+        }
     }
     
     /// Set the EditableAttributes for the editor element.
