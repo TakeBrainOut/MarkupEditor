@@ -52,6 +52,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     public var baseUrl: URL { cacheUrl() }      // The working directory for this WKWebView, where markup.html etc are loaded-from
     private var resourcesUrl: URL?
     public var id: String = UUID().uuidString
+    /// Accent color for the editor
+    public var accentColor: UIColor?
     /// User scripts that are injected at the end of document.
     public var userScripts: [String]? {
         didSet {
@@ -127,7 +129,8 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         resourcesUrl: URL? = nil,
         id: String? = nil,
         markupDelegate: MarkupDelegate? = nil,
-        configuration: MarkupWKWebViewConfiguration? = nil
+        configuration: MarkupWKWebViewConfiguration? = nil,
+        accentColor: UIColor? = nil
     ) {
         super.init(frame: CGRect.zero, configuration: WKWebViewConfiguration())
         self.html = html
@@ -139,6 +142,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
             self.id = id!
         }
         self.markupDelegate = markupDelegate
+        self.accentColor = accentColor
         // If configuration arrives as nil, set it to the default.
         // This way the setTopLevelAttributes will set editor to be contenteditable.
         markupConfiguration = configuration ?? MarkupWKWebViewConfiguration()
@@ -182,10 +186,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         }
         // Resolving the tintColor in this way lets the WKWebView
         // handle dark mode without any explicit settings in css
-        tintColor = UIColor(MarkupConfiguration.standard.accentColor)
+        tintColor = accentColor ?? UIColor(MarkupConfiguration.standard.accentColor)
         // Set up the accessoryView to be a MarkupToolbarUIView only if toolbarLocation == .keyboard
         if MarkupEditor.toolbarLocation == .keyboard {
-            inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate)
+            inputAccessoryView = MarkupToolbarUIView.inputAccessory(markupDelegate: markupDelegate, accentColor: accentColor)
         }
         observeFirstResponder()
         

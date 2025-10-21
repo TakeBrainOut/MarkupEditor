@@ -26,6 +26,11 @@ public struct MarkupToolbar: View {
     @ObservedObject private var searchActive = MarkupEditor.searchActive
     private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
+    private var accentColor: UIColor?
+    
+    var mappedAccentColor: Color {
+        accentColor.flatMap { Color(uiColor: $0) } ?? Color(red: 0.4, green: 0.8, blue: 0.2)
+    }
     
     public var body: some View {
         ZStack(alignment: .topLeading) {
@@ -36,8 +41,7 @@ public struct MarkupToolbar: View {
                         ToolbarImageButton(
                             systemName: "mic.fill",
                             action: { markupDelegate?.markupDidTapVoiceInToolbar() },
-                            notActiveBackground: Color(red: 0.4, green: 0.8, blue: 0.2)
-                        )
+                            notActiveBackground: mappedAccentColor                         )
                         
                         if contents.leftToolbar {
                             MarkupEditor.leftToolbar!
@@ -91,13 +95,14 @@ public struct MarkupToolbar: View {
         .zIndex(999)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false) {
+    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, accentColor: UIColor? = nil) {
         let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
         self.toolbarStyle = toolbarStyle
         let toolbarContents = contents == nil ? MarkupEditor.toolbarContents : contents!
         self.contents = toolbarContents
         self.withKeyboardButton = withKeyboardButton
         self.markupDelegate = markupDelegate
+        self.accentColor = accentColor
     }
     
     public func makeManaged() -> MarkupToolbar {

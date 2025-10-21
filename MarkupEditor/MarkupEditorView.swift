@@ -30,19 +30,20 @@ public struct MarkupEditorView: View, MarkupDelegate {
     private var html: Binding<String>?
     private var selectAfterLoad: Bool = true
     private let isEditable: Bool
+    private var accentColor: UIColor?
     /// The placeholder text that should be shown when there is no user input.
     public var placeholder: String?
     
     public var body: some View {
         VStack(spacing: 0) {
             if MarkupEditor.toolbarLocation == .top {
-                MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
+                MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
                 Divider()
             }
-            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, isEditable: isEditable)
+            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, isEditable: isEditable, accentColor: accentColor)
             if MarkupEditor.toolbarLocation == .bottom {
                 Divider()
-                MarkupToolbar(markupDelegate: markupDelegate).makeManaged()
+                MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
             }
         }
     }
@@ -58,25 +59,27 @@ public struct MarkupEditorView: View, MarkupDelegate {
         selectAfterLoad: Bool = true,
         resourcesUrl: URL? = nil,
         id: String? = nil,
-        isEditable: Bool = true
+        isEditable: Bool = true,
+        accentColor: UIColor? = nil
     ) {
-            self.isEditable = isEditable
-            self.markupDelegate = markupDelegate ?? self
-            self.wkNavigationDelegate = wkNavigationDelegate
-            self.wkUIDelegate = wkUIDelegate
-            self.userScripts = userScripts
-            self.markupConfiguration = configuration
-            self.html = html
-            self.selectAfterLoad = selectAfterLoad
-            self.resourcesUrl = resourcesUrl
-            self.id = id
-            self.placeholder = placeholder
-        }
-
+        self.isEditable = isEditable
+        self.markupDelegate = markupDelegate ?? self
+        self.wkNavigationDelegate = wkNavigationDelegate
+        self.wkUIDelegate = wkUIDelegate
+        self.userScripts = userScripts
+        self.markupConfiguration = configuration
+        self.html = html
+        self.selectAfterLoad = selectAfterLoad
+        self.resourcesUrl = resourcesUrl
+        self.id = id
+        self.placeholder = placeholder
+        self.accentColor = accentColor
+    }
+    
 }
 
 struct MarkupEditorView_Previews: PreviewProvider {
     static var previews: some View {
-            MarkupEditorView()
+        MarkupEditorView()
     }
 }
