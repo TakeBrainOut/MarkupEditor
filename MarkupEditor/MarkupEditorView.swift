@@ -35,15 +35,32 @@ public struct MarkupEditorView: View, MarkupDelegate {
     public var placeholder: String?
     
     public var body: some View {
-        VStack(spacing: 0) {
-            if MarkupEditor.toolbarLocation == .top {
-                MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
-                Divider()
-            }
-            MarkupWKWebViewRepresentable(markupDelegate: markupDelegate, wkNavigationDelegate: wkNavigationDelegate, wkUIDelegate: wkUIDelegate, userScripts: userScripts, configuration: markupConfiguration, html: html, placeholder: placeholder, selectAfterLoad: selectAfterLoad, resourcesUrl: resourcesUrl, id: id, isEditable: isEditable, accentColor: accentColor)
-            if MarkupEditor.toolbarLocation == .bottom {
-                Divider()
-                MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                if MarkupEditor.toolbarLocation == .top {
+                    MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
+                    Divider()
+                }
+                MarkupWKWebViewRepresentable(
+                    markupDelegate: markupDelegate,
+                    wkNavigationDelegate: wkNavigationDelegate,
+                    wkUIDelegate: wkUIDelegate,
+                    userScripts: userScripts,
+                    configuration: markupConfiguration,
+                    html: html,
+                    placeholder: placeholder,
+                    selectAfterLoad: selectAfterLoad,
+                    resourcesUrl: resourcesUrl,
+                    id: id,
+                    isEditable: isEditable,
+                    accentColor: accentColor
+                )
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+                if MarkupEditor.toolbarLocation == .bottom {
+                    Divider()
+                    MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
+                }
             }
         }
     }

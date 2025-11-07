@@ -19,6 +19,7 @@ import SwiftUI
 public struct MarkupToolbar: View {
     
     public static var managed: MarkupToolbar?   // The toolbar created when using MarkupEditorView or MarkupEditorUIView
+    public static var sharedAccentColor: UIColor?  // Shared accent color for use in other components
     public let toolbarStyle: ToolbarStyle
     private let withKeyboardButton: Bool
     @ObservedObject private var observedWebView = MarkupEditor.observedWebView
@@ -103,6 +104,10 @@ public struct MarkupToolbar: View {
         self.withKeyboardButton = withKeyboardButton
         self.markupDelegate = markupDelegate
         self.accentColor = accentColor
+        // Store accent color in static variable for use in other components
+        if let accentColor = accentColor {
+            MarkupToolbar.sharedAccentColor = accentColor
+        }
     }
     
     public func makeManaged() -> MarkupToolbar {

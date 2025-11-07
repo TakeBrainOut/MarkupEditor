@@ -14,6 +14,15 @@ public struct FormatToolbar: View {
     @ObservedObject private var selectionState: SelectionState = MarkupEditor.selectionState
     private let contents: FormatContents = MarkupEditor.toolbarContents.formatContents
     @State private var hoverLabel: Text = Text("Text Format")
+    @State private var showStylePicker: Bool = false
+    
+    private var accentColor: Color {
+        // Get accent color from MarkupToolbar if available, otherwise use default green
+        if let uiColor = MarkupToolbar.sharedAccentColor {
+            return Color(uiColor: uiColor)
+        }
+        return Color(red: 0.4, green: 0.8, blue: 0.2)
+    }
 
     public init() {}
 
@@ -22,58 +31,35 @@ public struct FormatToolbar: View {
             
             // H1, H2 and etc
             if contents.paragraph {
-                if #available(iOS 16, macCatalyst 16, *) {
-                    Menu {
-                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
-                                Text(styleContext.name)
-                                    .font(.system(size: styleContext.fontSize))
-                            }
+                Button(action: {
+                    showStylePicker = true
+                }) {
+                    Text(selectionState.style.name)
+                        .foregroundColor(.white)
+                        .fontWeight(.bold)
+                        .frame(width: 88, height: 40, alignment: .center)
+                }
+                .buttonStyle(.borderless)
+                .frame(width: 88, height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.clear, lineWidth: 1)
+                        )
+                )
+                .disabled(!selectionState.canStyle)
+                .sheet(isPresented: $showStylePicker) {
+                    StylePickerSheet(
+                        selectedStyle: selectionState.style,
+                        accentColor: accentColor,
+                        onStyleSelected: { styleContext in
+                            observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext)
+                            showStylePicker = false
                         }
-                    } label: {
-                        // Note foreground color is black on Mac Catalyst, which
-                        // doesn't seem to be settable at all with "Optimized for Mac"
-                        Text(selectionState.style.name)
-                            .foregroundColor(.white)
-                            .fontWeight(.bold)
-                            .frame(width: 88, height: toolbarStyle.buttonHeight(), alignment: .center)
-                    }
-                    .buttonStyle(.borderless)
-                    .menuStyle(.button)         // Not available until iOS 16
-//                    .frame(width: 88, height: toolbarStyle.buttonHeight())
-                    .frame(width: 88, height: 40)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke( Color.clear, lineWidth: 1)
-                            )
                     )
-                    .disabled(!selectionState.canStyle)
-                } else {
-                    Menu {
-                        ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
-                            Button(action: { observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext) }) {
-                                Text(styleContext.name)
-                                    .font(.system(size: styleContext.fontSize))
-                            }
-                        }
-                    } label: {
-                        Text(selectionState.style.name)
-                            .frame(width: 64, height: toolbarStyle.buttonHeight(), alignment: .center)
-                    }
-                    .menuStyle(.borderlessButton)   // Deprecated as of iOS14
-                    .frame(width: 88, height: toolbarStyle.buttonHeight())
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke( Color.clear, lineWidth: 1)
-                            )
-                    )
-                    .disabled(!selectionState.canStyle)
+                    .presentationDetents([.height(CGFloat(StyleContext.StyleCases.count * 50 + 20))])
                 }
             }
 
@@ -126,6 +112,54 @@ public struct FormatToolbar: View {
                 )
             }
         }
+    }
+}
+
+// MARK: - Style Picker Sheet
+
+struct StylePickerSheet: View {
+    let selectedStyle: StyleContext
+    let accentColor: Color
+    let onStyleSelected: (StyleContext) -> Void
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Style options
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
+                        Button(action: {
+                            onStyleSelected(styleContext)
+                        }) {
+                            HStack {
+                                Text(styleContext.name)
+                                    .font(.system(size: styleContext.fontSize))
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                if styleContext == selectedStyle {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(accentColor)
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(styleContext == selectedStyle ? accentColor.opacity(0.1) : Color(UIColor.systemBackground))
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        
+                        if styleContext != StyleContext.StyleCases.last {
+                            Divider()
+                                .padding(.leading, 20)
+                        }
+                    }
+                }
+            }
+            .background(Color(UIColor.systemBackground))
+        }
+        .background(Color(UIColor.systemBackground))
     }
 }
 
