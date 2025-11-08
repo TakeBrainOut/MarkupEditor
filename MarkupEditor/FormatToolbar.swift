@@ -61,16 +61,15 @@ public struct FormatToolbar: View {
                         )
                 )
                 .disabled(!selectionState.canStyle)
-                .sheet(isPresented: $showStylePicker) {
+                .forcePopover(isPresented: $showStylePicker) {
                     StylePickerSheet(
                         selectedStyle: selectionState.style,
                         accentColor: accentColor,
+                        showing: $showStylePicker,
                         onStyleSelected: { styleContext in
                             observedWebView.selectedWebView?.replaceStyle(selectionState.style, with: styleContext)
-                            showStylePicker = false
                         }
                     )
-                    .presentationDetents([.height(CGFloat(StyleContext.StyleCases.count * 50 + 20))])
                 }
             }
 
@@ -131,6 +130,7 @@ public struct FormatToolbar: View {
 struct StylePickerSheet: View {
     let selectedStyle: StyleContext
     let accentColor: Color
+    @Binding var showing: Bool
     let onStyleSelected: (StyleContext) -> Void
     
     var body: some View {
@@ -141,21 +141,23 @@ struct StylePickerSheet: View {
                     ForEach(StyleContext.StyleCases, id: \.self) { styleContext in
                         Button(action: {
                             onStyleSelected(styleContext)
+                            showing = false
                         }) {
                             HStack {
                                 Text(styleContext.name)
-                                    .font(.system(size: styleContext.fontSize))
+                                    .font(.system(size: 15, weight: .medium))
                                     .foregroundColor(.primary)
                                 Spacer()
                                 if styleContext == selectedStyle {
                                     Image(systemName: "checkmark")
                                         .foregroundColor(accentColor)
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                 }
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 14)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(height: 38)
                             .background(styleContext == selectedStyle ? accentColor.opacity(0.1) : Color(UIColor.systemBackground))
                             .contentShape(Rectangle())
                         }
@@ -171,6 +173,7 @@ struct StylePickerSheet: View {
             .background(Color(UIColor.systemBackground))
         }
         .background(Color(UIColor.systemBackground))
+        .frame(width: 260, height: CGFloat(StyleContext.StyleCases.count * 38 + 16))
     }
 }
 
