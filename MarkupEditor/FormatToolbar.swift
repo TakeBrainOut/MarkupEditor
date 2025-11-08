@@ -15,6 +15,7 @@ public struct FormatToolbar: View {
     private let contents: FormatContents = MarkupEditor.toolbarContents.formatContents
     @State private var hoverLabel: Text = Text("Text Format")
     @State private var showStylePicker: Bool = false
+    @Environment(\.colorScheme) private var colorScheme
     
     private var accentColor: Color {
         // Get accent color from MarkupToolbar if available, otherwise use default green
@@ -22,6 +23,16 @@ public struct FormatToolbar: View {
             return Color(uiColor: uiColor)
         }
         return Color(red: 0.4, green: 0.8, blue: 0.2)
+    }
+    
+    private var styleButtonBackgroundColor: Color {
+        colorScheme == .dark 
+            ? Color(red: 0.1, green: 0.1, blue: 0.1)
+            : Color(UIColor.systemGray5)
+    }
+    
+    private var styleButtonTextColor: Color {
+        colorScheme == .dark ? Color.white : Color(UIColor.label)
     }
 
     public init() {}
@@ -35,7 +46,7 @@ public struct FormatToolbar: View {
                     showStylePicker = true
                 }) {
                     Text(selectionState.style.name)
-                        .foregroundColor(.white)
+                        .foregroundColor(styleButtonTextColor)
                         .fontWeight(.bold)
                         .frame(width: 88, height: 40, alignment: .center)
                 }
@@ -43,7 +54,7 @@ public struct FormatToolbar: View {
                 .frame(width: 88, height: 40)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
+                        .fill(styleButtonBackgroundColor)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.clear, lineWidth: 1)

@@ -29,7 +29,6 @@ struct TableSizer: View {
     let maxRows: Int = 6
     let maxCols: Int = 8
     let cellSize: CGFloat = 16
-    let sizedColor = Color.accentColor.opacity(0.2)
     //TODO: A hack, but I cannot find a way for the padding on the popover to look right in both environments
     #if targetEnvironment(macCatalyst)
     let topPadding: CGFloat = 8
@@ -44,6 +43,21 @@ struct TableSizer: View {
     @State var dragged: Bool = false
     @State private var backgroundWidth = CGFloat.zero
     @State private var backgroundHeight = CGFloat.zero
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var sizedColor: Color {
+        if let accentColor = MarkupToolbar.sharedAccentColor {
+            return Color(uiColor: accentColor).opacity(0.2)
+        }
+        return Color(red: 0.2, green: 0.8, blue: 0.2).opacity(0.2)
+    }
+    
+    private var borderColor: Color {
+        if let accentColor = MarkupToolbar.sharedAccentColor {
+            return Color(uiColor: accentColor)
+        }
+        return Color(red: 0.2, green: 0.8, blue: 0.2)
+    }
     
     var body: some View {
         let dragGesture = DragGesture()
@@ -87,7 +101,7 @@ struct TableSizer: View {
                             ForEach(0..<maxCols, id: \.self) { col in
                                 Rectangle()
                                     .frame(width: cellSize, height: cellSize)
-                                    .border(MarkupConfiguration.standard.accentColor)
+                                    .border(borderColor)
                                     .background(Color.clear)
                                     .foregroundColor(Color.clear)
                                     .contentShape(Rectangle())

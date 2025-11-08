@@ -28,9 +28,23 @@ public struct MarkupToolbar: View {
     private var contents: ToolbarContents
     public var markupDelegate: MarkupDelegate?
     private var accentColor: UIColor?
+    @Environment(\.colorScheme) private var colorScheme
     
     var mappedAccentColor: Color {
         accentColor.flatMap { Color(uiColor: $0) } ?? Color(red: 0.4, green: 0.8, blue: 0.2)
+    }
+    
+    // Theme-aware colors
+    private var toolbarBackgroundColor: Color {
+        colorScheme == .dark 
+            ? Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.85)
+            : Color(UIColor.systemGray6).opacity(0.95)
+    }
+    
+    private var toolbarShadowColor: Color {
+        colorScheme == .dark 
+            ? Color.black.opacity(0.3)
+            : Color.black.opacity(0.12)
     }
     
     public var body: some View {
@@ -42,7 +56,9 @@ public struct MarkupToolbar: View {
                         ToolbarImageButton(
                             systemName: "mic.fill",
                             action: { markupDelegate?.markupDidTapVoiceInToolbar() },
-                            notActiveBackground: mappedAccentColor                         )
+                            notActiveBackground: mappedAccentColor,
+                            forceWhiteForeground: true
+                        )
                         
                         if contents.leftToolbar {
                             MarkupEditor.leftToolbar!
@@ -84,8 +100,8 @@ public struct MarkupToolbar: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.85))
-                .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
+                .fill(toolbarBackgroundColor)
+                .shadow(color: toolbarShadowColor, radius: 4, x: 0, y: 2)
         )
         // Because the icons in toolbars are sized based on font, we need to limit their dynamicTypeSize
         // or they become illegible at very large sizes.

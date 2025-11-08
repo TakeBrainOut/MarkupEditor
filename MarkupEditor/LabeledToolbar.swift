@@ -11,8 +11,13 @@ import SwiftUI
 /// The standard way to display one of the toolbars with a label above. Typically ToobarImageButtons are provided as its content.
 public struct LabeledToolbar<Content: View>: View {
     @EnvironmentObject private var toolbarStyle: ToolbarStyle
+    @Environment(\.colorScheme) private var colorScheme
     private let label: Text
     private let content: Content
+    
+    private var labelColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.7) : Color(UIColor.secondaryLabel)
+    }
     
     public init(label: Text, @ViewBuilder content: () -> Content) {
         self.label = label
@@ -25,6 +30,7 @@ public struct LabeledToolbar<Content: View>: View {
             VStack(spacing: 2) {
                 label
                     .font(.system(size: 10, weight: .light))
+                    .foregroundColor(labelColor)
                 HStack (alignment: .bottom) {
                     content
                 }
