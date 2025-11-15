@@ -21,7 +21,9 @@ import Foundation
 @MainActor
 public class ToolbarContents {
     public static var custom: ToolbarContents?
-    public static let shared = custom ?? ToolbarContents()
+    public static var shared: ToolbarContents {
+        custom ?? ToolbarContents()
+    }
     
     public var leftToolbar: Bool
     public var correction: Bool
