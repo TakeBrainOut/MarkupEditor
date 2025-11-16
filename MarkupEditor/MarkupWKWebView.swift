@@ -150,6 +150,12 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         // Enable drop interaction
         //let dropInteraction = UIDropInteraction(delegate: self)
         //addInteraction(dropInteraction)
+        
+        // Add tap gesture recognizer
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        tapGesture.delegate = self
+        addGestureRecognizer(tapGesture)
+        
         // Load markup.html to kick things off
         let tempRootHtml = cacheUrl().appendingPathComponent("markup.html")
         
@@ -688,6 +694,15 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
     /// Ensure extractContents behaves as expected, since we depend on it.
     public func testExtractContents(handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.testExtractContents()") { result, error in handler?() }
+    }
+    
+    //MARK: Gesture Handlirng
+    
+    /// Handle tap gesture on the WebView
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        if gesture.state == .ended && !isFocused {
+                focus()
+        }
     }
     
     //MARK: Javascript interactions
@@ -1569,5 +1584,15 @@ extension MarkupWKWebView: UIPopoverPresentationControllerDelegate {
     
     public func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         .none
+    }
+}
+
+//MARK: Gesture Recognizer Delegate
+
+extension MarkupWKWebView: UIGestureRecognizerDelegate {
+    
+    /// Allow tap gesture to work alongside other gestures
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }
