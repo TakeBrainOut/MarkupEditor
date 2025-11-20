@@ -47,6 +47,13 @@ public struct StyleToolbar: View {
                         active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .OL }, set: { _ = $0 }),
                         onHover: { over in hoverLabel = Text(over ? "Numbers" : "Paragraph Style") }
                     )
+                case .todo:
+                    ToolbarImageButton(
+                        systemName: "checklist",
+                        action: { observedWebView.selectedWebView?.toggleListItem(type: .TASK) },
+                        active: Binding<Bool>(get: { selectionState.isInListItem && selectionState.list == .TASK }, set: { _ = $0 }),
+                        onHover: { over in hoverLabel = Text(over ? "TODO List" : "Paragraph Style") }
+                    )
                 }
             }
 

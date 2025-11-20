@@ -87,6 +87,9 @@ public class MarkupMenu {
                 return UIKeyCommand(title: "Bullets", action: #selector(MarkupWKWebView.bullets), input: ".", modifierFlags: .command)
             case .number:
                 return UIKeyCommand(title: "Numbers", action: #selector(MarkupWKWebView.numbers), input: "/", modifierFlags: .command)
+            case .todo:
+                return UIKeyCommand(title: "ToDo", action: #selector(MarkupWKWebView.todoList), input: "/", modifierFlags: .command)
+
             }
         }
 

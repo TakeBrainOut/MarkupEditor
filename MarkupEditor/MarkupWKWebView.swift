@@ -1389,6 +1389,10 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         toggleListItem(type: .OL)
     }
     
+    @objc public func todoList() {
+        toggleListItem(type: .TASK)
+    }
+    
     /// Switch between ordered and unordered list styles.
     public func toggleListItem(type: ListContext, handler: (()->Void)? = nil) {
         evaluateJavaScript("MU.toggleListItem('\(type.tag)')") { result, error in

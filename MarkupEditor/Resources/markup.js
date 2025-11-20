@@ -14037,6 +14037,38 @@
       toDOM() { return liDOM; },
       defining: true
   };
+  /**
+  A task list node spec, represented in the DOM as `<ul class="task-list">`.
+  */
+  const taskList = {
+      group: "block",
+      content: "task_item+",
+      parseDOM: [{ 
+          tag: "ul.task-list",
+          priority: 51  // Higher priority than regular ul
+      }],
+      toDOM() { return ["ul", { class: "task-list" }, 0]; }
+  };
+  /**
+  A task item (`<li>`) spec with a checked attribute for checkbox state.
+  */
+  const taskItem = {
+      attrs: { checked: { default: false } },
+      parseDOM: [{ 
+          tag: "li.task-item",
+          priority: 51,  // Higher priority than regular li
+          getAttrs(dom) {
+              return { checked: dom.getAttribute("data-checked") === "true" };
+          }
+      }],
+      toDOM(node) { 
+          return ["li", { 
+              class: "task-item",
+              "data-checked": node.attrs.checked ? "true" : "false"
+          }, 0]; 
+      },
+      defining: true
+  };
   function add$1(obj, props) {
       let copy = {};
       for (let prop in obj)
@@ -14049,8 +14081,9 @@
   Convenience function for adding list-related node types to a map
   specifying the nodes for a schema. Adds
   [`orderedList`](https://prosemirror.net/docs/ref/#schema-list.orderedList) as `"ordered_list"`,
-  [`bulletList`](https://prosemirror.net/docs/ref/#schema-list.bulletList) as `"bullet_list"`, and
-  [`listItem`](https://prosemirror.net/docs/ref/#schema-list.listItem) as `"list_item"`.
+  [`bulletList`](https://prosemirror.net/docs/ref/#schema-list.bulletList) as `"bullet_list"`,
+  [`listItem`](https://prosemirror.net/docs/ref/#schema-list.listItem) as `"list_item"`,
+  [`taskList`] as `"task_list"`, and [`taskItem`] as `"task_item"`.
 
   `itemContent` determines the content expression for the list items.
   If you want the commands defined in this module to apply to your
@@ -14063,7 +14096,9 @@
       return nodes.append({
           ordered_list: add$1(orderedList, { content: "list_item+", group: listGroup }),
           bullet_list: add$1(bulletList, { content: "list_item+", group: listGroup }),
-          list_item: add$1(listItem, { content: itemContent })
+          list_item: add$1(listItem, { content: itemContent }),
+          task_list: add$1(taskList, { content: "task_item+", group: listGroup }),
+          task_item: add$1(taskItem, { content: itemContent })
       });
   }
   /**
@@ -14246,6 +14281,110 @@
           .append(atEnd ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))), atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1));
       dispatch(tr.scrollIntoView());
       return true;
+  }
+  /**
+  Toggle the checked state of a task item.
+  */
+  function toggleTaskItem(state, dispatch) {
+      let { $from } = state.selection;
+      // Find the task_item node that contains the selection
+      for (let d = $from.depth; d >= 0; d--) {
+          let node = $from.node(d);
+          if (node.type.name === 'task_item') {
+              if (dispatch) {
+                  let tr = state.tr;
+                  let pos = $from.before(d);
+                  tr.setNodeMarkup(pos, null, { checked: !node.attrs.checked });
+                  dispatch(tr);
+              }
+              return true;
+          }
+      }
+      return false;
+  }
+  /**
+  Create a custom splitListItem for task_item that always creates unchecked items.
+  */
+  function splitTaskItem(itemType) {
+      return function (state, dispatch) {
+          let { $from, $to, node } = state.selection;
+          if ((node && node.isBlock) || $from.depth < 2 || !$from.sameParent($to))
+              return false;
+          let grandParent = $from.node(-1);
+          if (grandParent.type != itemType)
+              return false;
+          if ($from.parent.content.size == 0 && $from.node(-1).childCount == $from.indexAfter(-1)) {
+              // In an empty block. If this is a nested list, the wrapping
+              // list item should be split. Otherwise, bail out and let next
+              // command handle lifting.
+              if ($from.depth == 3 || $from.node(-3).type != itemType ||
+                  $from.index(-2) != $from.node(-2).childCount - 1)
+                  return false;
+              if (dispatch) {
+                  let wrap = Fragment.empty;
+                  let depthBefore = $from.index(-1) ? 1 : $from.index(-2) ? 2 : 3;
+                  // Build a fragment containing empty versions of the structure
+                  // from the outer list item to the parent node of the cursor
+                  for (let d = $from.depth - depthBefore; d >= $from.depth - 3; d--)
+                      wrap = Fragment.from($from.node(d).copy(wrap));
+                  let depthAfter = $from.indexAfter(-1) < $from.node(-2).childCount ? 1
+                      : $from.indexAfter(-2) < $from.node(-3).childCount ? 2 : 3;
+                  // Add a second list item with checked: false
+                  wrap = wrap.append(Fragment.from(itemType.createAndFill({ checked: false })));
+                  let start = $from.before($from.depth - (depthBefore - 1));
+                  let tr = state.tr.replace(start, $from.after(-depthAfter), new Slice(wrap, 4 - depthBefore, 0));
+                  let sel = -1;
+                  tr.doc.nodesBetween(start, tr.doc.content.size, (node, pos) => {
+                      if (sel > -1)
+                          return false;
+                      if (node.isTextblock && node.content.size == 0)
+                          sel = pos + 1;
+                  });
+                  if (sel > -1)
+                      tr.setSelection(Selection.near(tr.doc.resolve(sel)));
+                  dispatch(tr.scrollIntoView());
+              }
+              return true;
+          }
+          let nextType = $to.pos == $from.end() ? grandParent.contentMatchAt(0).defaultType : null;
+          let tr = state.tr.delete($from.pos, $to.pos);
+          // Split with explicit attrs for task_item
+          let types = nextType ? [{ type: itemType, attrs: { checked: false } }, { type: nextType }] : [{ type: itemType, attrs: { checked: false } }];
+          if (!canSplit(tr.doc, $from.pos, 2, types))
+              return false;
+          if (dispatch)
+              dispatch(tr.split($from.pos, 2, types).scrollIntoView());
+          return true;
+      };
+  }
+  /**
+  Wrap the selection in a task list, or unwrap if already in a task list.
+  */
+  function wrapInTaskList(state, dispatch) {
+      const taskListType = state.schema.nodes.task_list;
+      const taskItemType = state.schema.nodes.task_item;
+      if (!taskListType || !taskItemType) return false;
+      
+      let { $from, $to } = state.selection;
+      let range = $from.blockRange($to);
+      if (!range) return false;
+      
+      // Check if already in a task list
+      let inTaskList = false;
+      for (let d = $from.depth; d >= 0; d--) {
+          if ($from.node(d).type === taskListType) {
+              inTaskList = true;
+              break;
+          }
+      }
+      
+      if (inTaskList) {
+          // Unwrap from task list
+          return liftListItem(taskItemType)(state, dispatch);
+      } else {
+          // Wrap in task list
+          return wrapInList(taskListType, null)(state, dispatch);
+      }
   }
 
   const pDOM = ["p", 0], 
@@ -17223,7 +17362,7 @@
       };
   }
   /**
-   * The Searcher class lets us find text ranges that match a search string within the editor element.
+   * The Searcher class lets us find text ranges that match a search string within the editor eleme nt.
    * 
    * The searcher uses the ProseMirror search plugin https://github.com/proseMirror/prosemirror-search to create 
    * and track ranges within the doc that match a given SearchQuery.
@@ -18575,18 +18714,21 @@
       const selection = state.selection;
       const ul = state.schema.nodes.bullet_list;
       const ol = state.schema.nodes.ordered_list;
+      const task = state.schema.nodes.task_list;
       let hasUl = false;
       let hasOl = false;
+      let hasTask = false;
       state.doc.nodesBetween(selection.from, selection.to, node => {
           if (node.isBlock) {
               hasUl = hasUl || (node.type === ul);
               hasOl = hasOl || (node.type === ol);
+              hasTask = hasTask || (node.type === task);
               return true;  // Lists can nest, so we need to recurse
           }
           return false; 
       });
       // If selection contains no lists or multiple list types, return null; else return the one list type
-      const hasType = hasUl ? (hasOl ? null : ul) : (hasOl ? ol : null);
+      const hasType = hasUl ? (hasOl || hasTask ? null : ul) : (hasOl ? (hasTask ? null : ol) : (hasTask ? task : null));
       return listTypeFor(hasType, state.schema);
   }
 
@@ -18603,6 +18745,8 @@
           return schema.nodes.bullet_list;
       } else if (listType === 'OL') {
           return schema.nodes.ordered_list;
+      } else if (listType === 'TASK') {
+          return schema.nodes.task_list;
       } else {
           return null;
       }}
@@ -18610,13 +18754,15 @@
   /**
    * Return the String corresponding to `nodeType`, else null.
    * @param {NodeType} nodeType The NodeType corresponding to the String
-   * @returns {'UL' | 'OL' | null}
+   * @returns {'UL' | 'OL' | 'TASK' | null}
    */
   function listTypeFor(nodeType, schema) {
       if (nodeType === schema.nodes.bullet_list) {
           return 'UL';
       } else if (nodeType === schema.nodes.ordered_list) {
           return 'OL';
+      } else if (nodeType === schema.nodes.task_list) {
+          return 'TASK';
       } else {
           return null;
       }}
@@ -18643,13 +18789,15 @@
    * @returns {Command}                           A command to wrap the selection in a list.
    */
   function wrapInListCommand(schema, targetNodeType, attrs) {
-      const listTypes = [schema.nodes.bullet_list, schema.nodes.ordered_list];
-      const targetListItemType = schema.nodes.list_item;
-      const listItemTypes = [targetListItemType];
+      const listTypes = [schema.nodes.bullet_list, schema.nodes.ordered_list, schema.nodes.task_list];
+      // Determine the target list item type based on the target list type
+      const isTaskList = targetNodeType === schema.nodes.task_list;
+      const targetListItemType = isTaskList ? schema.nodes.task_item : schema.nodes.list_item;
+      const listItemTypes = [schema.nodes.list_item, schema.nodes.task_item];
 
       const commandAdapter = (state, dispatch) => {
           const inTargetNodeType = getListType(state) === listTypeFor(targetNodeType, state.schema);
-          const command = inTargetNodeType ? liftListItem(state.schema.nodes.list_item) : wrapInList(targetNodeType, attrs);
+          const command = inTargetNodeType ? liftListItem(targetListItemType) : wrapInList(targetNodeType, attrs);
           if (command(state)) {
               let result = command(state, dispatch);
               if (dispatch) stateChanged();
@@ -20475,6 +20623,10 @@
       // <span class="material-icons-outlined">format_list_numbered</span>
       svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-80v-60h100v-30h-60v-60h60v-30H120v-60h120q17 0 28.5 11.5T280-280v40q0 17-11.5 28.5T240-200q17 0 28.5 11.5T280-160v40q0 17-11.5 28.5T240-80H120Zm0-280v-110q0-17 11.5-28.5T160-510h60v-30H120v-60h120q17 0 28.5 11.5T280-560v70q0 17-11.5 28.5T240-450h-60v30h100v60H120Zm60-280v-180h-60v-60h120v240h-60Zm180 440v-80h480v80H360Zm0-240v-80h480v80H360Zm0-240v-80h480v80H360Z"/></svg>'
     },
+    taskList: {
+      // <span class="material-icons-outlined">checklist</span>
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M222-200 80-342l56-56 85 85 170-170 56 57-225 226Zm0-320L80-662l56-56 85 85 170-170 56 57-225 226Zm298 240v-80h360v80H520Zm0-320v-80h360v80H520Z"/></svg>'
+    },
     blockquote: {
       // <span class="material-icons-outlined">format_indent_increase</span>
       svg: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M120-120v-80h720v80H120Zm320-160v-80h400v80H440Zm0-160v-80h400v80H440Zm0-160v-80h400v80H440ZM120-760v-80h720v80H120Zm0 440v-320l160 160-160 160Z"/></svg>'
@@ -22288,8 +22440,14 @@
         schema.nodes.ordered_list,
         { title: 'Toggle numbered list' + keyString('number', keymap), icon: icons.orderedList }
       );
+      let task = toggleListItem(
+        schema,
+        schema.nodes.task_list,
+        { title: 'Toggle task list' + keyString('task', keymap), icon: icons.taskList }
+      );
       items.push(bullet);
       items.push(number);
+      items.push(task);
     }
     if (dent) {
       let indent = indentItem({ title: 'Increase indent' + keyString('indent', keymap), icon: icons.blockquote });
@@ -22642,7 +22800,11 @@
       // the handleEnter with splitListItem that is bound to Enter here, it always executes, 
       // but splitListItem will also execute, as will anything else beyond it in the chain 
       // if splitListItem returns false (i.e., it doesn't really split the list).
-      bind("Enter", chainCommands(handleEnter, splitListItem(schema.nodes.list_item)));
+      bind("Enter", chainCommands(
+        handleEnter, 
+        splitListItem(schema.nodes.list_item),
+        splitTaskItem(schema.nodes.task_item)
+      ));
       // The MarkupEditor handles Shift-Enter as searchBackward when search is active.
       bind("Shift-Enter", handleShiftEnter);
       // The MarkupEditor needs to be notified of state changes on Delete, like Backspace
@@ -22666,6 +22828,7 @@
       // List types
       bind(keymap.bullet, wrapInListCommand(schema, schema.nodes.bullet_list));
       bind(keymap.number, wrapInListCommand(schema, schema.nodes.ordered_list));
+      bind(keymap.task, wrapInListCommand(schema, schema.nodes.task_list));
       // Denting
       bind(keymap.indent, indentCommand());
       bind(keymap.outdent, outdentCommand());
@@ -22835,6 +22998,15 @@
     return textblockTypeInputRule(/^```$/, nodeType)
   }
 
+  // : (NodeType) → InputRule
+  // Given a task list node type, returns an input rule that turns `[ ]` or `[x]`
+  // at the start of a textblock into a task list item.
+  function taskListRule(nodeType) {
+    return wrappingInputRule(/^\s*(\[[ x]\])\s$/, nodeType, match => {
+      return {}
+    })
+  }
+
   // : (NodeType, number) → InputRule
   // Given a node type and a maximum level, creates an input rule that
   // turns up to that number of `#` characters followed by a space at
@@ -22853,6 +23025,7 @@
     if (type = schema.nodes.blockquote) rules.push(blockQuoteRule(type));
     if (type = schema.nodes.ordered_list) rules.push(orderedListRule(type));
     if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
+    if (type = schema.nodes.task_list) rules.push(taskListRule(type));
     if (type = schema.nodes.code_block) rules.push(codeBlockRule(type));
     if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
     return inputRules({rules})
@@ -23015,6 +23188,52 @@
   }
 
   /**
+   * Plugin to handle task item checkbox clicks
+   */
+  const taskItemPlugin = new Plugin({
+    key: new PluginKey('taskItem'),
+    props: {
+      handleClickOn(view, pos, node, nodePos, event) {
+        // Check if editor is editable
+        if (!view.editable) {
+          return false;
+        }
+        
+        if (node.type.name === 'task_item') {
+          // Check if click is on the checkbox area (first ~50px of the item)
+          const dom = view.nodeDOM(nodePos);
+          if (dom && event.target instanceof Element) {
+            const rect = dom.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            // If clicked within the first 50px (checkbox area), toggle the checkbox
+            if (clickX < 50) {
+              // Prevent default behavior to avoid text selection and cursor movement
+              event.preventDefault();
+              event.stopPropagation();
+              
+              const tr = view.state.tr;
+              tr.setNodeMarkup(nodePos, null, { checked: !node.attrs.checked });
+              
+              // Find the last text position in the task_item
+              // nodePos is the position before the task_item node
+              // node.nodeSize includes the entire task_item
+              // We want to place cursor at the end of the content
+              const endPos = nodePos + node.nodeSize - 1;
+              
+              // Set selection to the end of the task item
+              tr.setSelection(Selection.near(tr.doc.resolve(endPos), -1));
+              
+              view.dispatch(tr);
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    }
+  });
+
+  /**
    * Return an array of Plugins used for the MarkupEditor
    * @param {Schema} schema The schema used for the MarkupEditor
    * @returns 
@@ -23039,6 +23258,9 @@
 
     // Add the plugin that handles table borders
     plugins.push(tablePlugin);
+
+    // Add the plugin that handles task item checkbox clicks
+    plugins.push(taskItemPlugin);
 
     // Add the plugin that handles placeholder display for an empty document
     if (config?.placeholder) setPlaceholder(config.placeholder);
@@ -23198,6 +23420,7 @@
           // Stylebar
           "bullet": ["Ctrl-U", "Ctrl-u"],
           "number": ["Ctrl-O", "Ctrl-o"],
+          "task": ["Ctrl-T", "Ctrl-t"],
           "indent": ["Mod-]", "Ctrl-q"],
           "outdent": ["Mod-[", "Shift-Ctrl-q"],
           // Format

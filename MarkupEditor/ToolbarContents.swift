@@ -102,7 +102,7 @@ public struct StyleContents {
 
     /// Determin which kind of list format we want
     public enum ListType {
-        case bullet, number
+        case bullet, number, todo
     }
 
     public var listType: [ListType]
@@ -114,7 +114,7 @@ public struct StyleContents {
     }
 
     public init(paragraph: Bool = true, list: Bool = true, dent: Bool = true) {
-        self.listType = list ? [.bullet, .number] : []
+        self.listType = list ? [.bullet, .number, .todo] : []
         self.dent = dent
     }
 }

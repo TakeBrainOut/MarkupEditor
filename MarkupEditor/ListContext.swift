@@ -18,7 +18,8 @@ public class ListContext: @unchecked Sendable, ObservableObject, Identifiable, H
     public static let Undefined = ListContext(tag: "Undefined")
     public static let UL = ListContext(tag: "UL")
     public static let OL = ListContext(tag: "OL")
-    public static let AllCases = [Undefined, UL, OL]
+    public static let TASK = ListContext(tag: "TASK")
+    public static let AllCases = [Undefined, UL, OL, TASK]
     
     public static func with(tag: String) -> ListContext {
         if let listContext = AllCases.first(where: { $0.tag == tag }) {
