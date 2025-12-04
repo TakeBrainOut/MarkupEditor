@@ -177,7 +177,7 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         tintColor = accentColor ?? UIColor(MarkupConfiguration.standard.accentColor)
         
         let contents = ToolbarContents.from(ToolbarContents.shared)
-        let toolbar = MarkupToolbar(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: false, accentColor: accentColor)
+        let toolbar = MarkupToolbar(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true, accentColor: accentColor)
         let hostingController = UIHostingController(rootView: toolbar)
         hostingController.view.frame = CGRect(
             x: 0,

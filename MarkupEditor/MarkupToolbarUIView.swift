@@ -39,7 +39,7 @@ public class MarkupToolbarUIView: UIView {
         super.init(frame: frame)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, accentColor: UIColor? = nil) {
+    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = true, accentColor: UIColor? = nil) {
         super.init(frame: CGRect.zero)
         self.markupDelegate = markupDelegate
         autoresizingMask = .flexibleHeight  // Needed for the intrinsicContentSize change to work
@@ -76,7 +76,7 @@ public class MarkupToolbarUIView: UIView {
     /// Return a MarkupToolbarUIView that is compact, containing the current shared ToolbarContents, but makes sure keyboardButton is present.
     public static func inputAccessory(markupDelegate: MarkupDelegate? = nil, accentColor: UIColor? = nil) -> MarkupToolbarUIView {
         let contents = ToolbarContents.from(ToolbarContents.shared)
-        let toolbar = MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: false, accentColor: accentColor).makeManaged()
+        let toolbar = MarkupToolbarUIView(.compact, contents: contents, markupDelegate: markupDelegate, withKeyboardButton: true, accentColor: accentColor).makeManaged()
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         toolbar.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         return toolbar

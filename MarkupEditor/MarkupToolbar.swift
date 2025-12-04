@@ -112,7 +112,7 @@ public struct MarkupToolbar: View {
         .zIndex(999)
     }
     
-    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = false, accentColor: UIColor? = nil) {
+    public init(_ style: ToolbarStyle.Style? = nil, contents: ToolbarContents? = nil, markupDelegate: MarkupDelegate? = nil, withKeyboardButton: Bool = true, accentColor: UIColor? = nil) {
         let toolbarStyle = style == nil ? MarkupEditor.toolbarStyle : ToolbarStyle(style!)
         self.toolbarStyle = toolbarStyle
         let toolbarContents = contents == nil ? MarkupEditor.toolbarContents : contents!
