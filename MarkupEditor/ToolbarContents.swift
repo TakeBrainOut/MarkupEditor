@@ -114,7 +114,7 @@ public struct StyleContents {
     }
 
     public init(paragraph: Bool = true, list: Bool = true, dent: Bool = true) {
-        self.listType = list ? [.bullet, .number, .todo] : []
+        self.listType = list ? [.todo, .bullet, .number] : []
         self.dent = dent
     }
 }
