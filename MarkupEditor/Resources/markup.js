@@ -23224,6 +23224,8 @@
               tr.setSelection(Selection.near(tr.doc.resolve(endPos), -1));
               
               view.dispatch(tr);
+              // Notify Swift side that the content has changed
+              callbackInput();
               return true;
             }
           }
