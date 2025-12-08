@@ -20,6 +20,7 @@ public struct MarkupToolbar: View {
     
     public static var managed: MarkupToolbar?   // The toolbar created when using MarkupEditorView or MarkupEditorUIView
     public static var sharedAccentColor: UIColor?  // Shared accent color for use in other components
+    public static var isVoiceRecognitionEnabled: Bool = true  // Voice recognition availability
     public let toolbarStyle: ToolbarStyle
     private let withKeyboardButton: Bool
     @ObservedObject private var observedWebView = MarkupEditor.observedWebView
@@ -60,6 +61,7 @@ public struct MarkupToolbar: View {
                             notActiveBackground: mappedAccentColor,
                             forceWhiteForeground: true
                         )
+                        .opacity(MarkupToolbar.isVoiceRecognitionEnabled ? 1.0 : 0.4)
                         
                         if contents.leftToolbar {
                             MarkupEditor.leftToolbar!
