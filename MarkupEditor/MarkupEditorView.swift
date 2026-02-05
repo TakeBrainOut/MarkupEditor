@@ -37,10 +37,10 @@ public struct MarkupEditorView: View, MarkupDelegate {
     public var body: some View {
         GeometryReader { proxy in
             VStack(spacing: 0) {
-                if MarkupEditor.toolbarLocation == .top {
-                    MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
-                    Divider()
-                }
+//                if MarkupEditor.toolbarLocation == .top {
+//                    MarkupToolbar(markupDelegate: markupDelegate, accentColor: accentColor).makeManaged()
+//                    Divider()
+//                }
                 MarkupWKWebViewRepresentable(
                     markupDelegate: markupDelegate,
                     wkNavigationDelegate: wkNavigationDelegate,
